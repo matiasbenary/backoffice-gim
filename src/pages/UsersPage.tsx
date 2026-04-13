@@ -48,8 +48,9 @@ export function UsersPage() {
         search: search || undefined,
       })
       .then((res) => {
-        setUsers(res.data ?? [])
-        setTotalPages(res.meta?.total_pages ?? 1)
+        const { data: users = [], meta } = res as unknown as { data: UserAdminResponse[]; meta: { total_pages: number } }
+        setUsers(users)
+        setTotalPages(meta?.total_pages ?? 1)
       })
       .catch(console.error)
       .finally(() => setLoading(false))
