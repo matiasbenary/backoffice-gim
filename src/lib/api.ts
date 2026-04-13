@@ -156,6 +156,18 @@ export interface PendingGym {
   created_at: string
 }
 
+export interface CreateGymInput {
+  name: string
+  address: string
+  city: string
+  country: string
+  phone?: string
+  email?: string
+  latitude?: number
+  longitude?: number
+  gym_chain_id?: number
+}
+
 export interface Feedback {
   id: number
   user_id: number
@@ -249,8 +261,11 @@ export const api = {
 
   admin: {
     listPendingGyms: () => request<PendingGym[]>('/api/v1/admin/pending-gyms'),
-    approveGym: (userId: number) =>
-      request<void>(`/api/v1/admin/pending-gyms/${userId}/approve`, { method: 'POST' }),
+    approveGym: (userId: number, input: CreateGymInput) =>
+      request<Gym>(`/api/v1/admin/pending-gyms/${userId}/approve`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      }),
     listFeedback: (type?: string) =>
       request<Feedback[]>(`/api/v1/admin/feedback${type ? `?type=${type}` : ''}`),
     updateFeedbackStatus: (id: number, status: string) =>

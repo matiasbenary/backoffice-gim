@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, Gym, PendingGym } from '@/lib/api'
+import { api, Gym, PendingGym, CreateGymInput } from '@/lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -9,12 +9,95 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { formatDate } from '@/lib/utils'
 import { Plus, Check, X } from 'lucide-react'
 
+function ApproveModal({ pending, onApprove, onClose }: {
+  pending: PendingGym
+  onApprove: (userId: number, input: CreateGymInput) => Promise<void>
+  onClose: () => void
+}) {
+  const [form, setForm] = useState<CreateGymInput>({
+    name: pending.gym_name || '',
+    address: pending.address || '',
+    city: pending.city || '',
+    country: 'AR',
+    phone: pending.phone || '',
+    email: pending.email || '',
+  })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubmit = async () => {
+    if (!form.name || !form.address || !form.city || !form.country) {
+      setError('Nombre, dirección, ciudad y país son obligatorios')
+      return
+    }
+    setSaving(true)
+    setError('')
+    try {
+      await onApprove(pending.user_id, form)
+      onClose()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al aprobar')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+      <Card className="w-full max-w-md" onClick={e => e.stopPropagation()}>
+        <CardHeader>
+          <CardTitle>Aprobar Gimnasio</CardTitle>
+          <p className="text-sm text-[#888]">Solicitante: {pending.email}</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Nombre del gym *</Label>
+            <Input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ej: FitLife Centro" />
+          </div>
+          <div className="space-y-2">
+            <Label>Dirección *</Label>
+            <Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="Av. Corrientes 1234" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Ciudad *</Label>
+              <Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} placeholder="Buenos Aires" />
+            </div>
+            <div className="space-y-2">
+              <Label>País *</Label>
+              <Input value={form.country} onChange={e => setForm({ ...form, country: e.target.value })} placeholder="AR" maxLength={2} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Teléfono</Label>
+              <Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+54 11 1234-5678" />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="gym@email.com" />
+            </div>
+          </div>
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button onClick={handleSubmit} disabled={saving}>
+              {saving ? 'Aprobando…' : 'Aprobar y crear'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
 export function GymsPage() {
   const [gyms, setGyms] = useState<Gym[]>([])
   const [pendingGyms, setPendingGyms] = useState<PendingGym[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newGym, setNewGym] = useState({ name: '', address: '', city: '', country: '' })
+  const [approving, setApproving] = useState<PendingGym | null>(null)
 
   useEffect(() => {
     Promise.all([api.gyms.list(), api.admin.listPendingGyms()])
@@ -26,9 +109,9 @@ export function GymsPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const handleApprove = async (userId: number) => {
+  const handleApprove = async (userId: number, input: CreateGymInput) => {
     try {
-      await api.admin.approveGym(userId)
+      await api.admin.approveGym(userId, input)
       setPendingGyms((prev) => prev.filter((p) => p.user_id !== userId))
     } catch (err) {
       console.error(err)
@@ -86,7 +169,7 @@ export function GymsPage() {
                     <TableCell className="text-[#888]">{formatDate(pg.created_at)}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button size="sm" onClick={() => handleApprove(pg.user_id)}>
+                        <Button size="sm" onClick={() => setApproving(pg)}>
                           <Check className="mr-1 h-4 w-4" />
                           Aprobar
                         </Button>
@@ -151,6 +234,14 @@ export function GymsPage() {
           )}
         </CardContent>
       </Card>
+
+      {approving && (
+        <ApproveModal
+          pending={approving}
+          onApprove={handleApprove}
+          onClose={() => setApproving(null)}
+        />
+      )}
 
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
