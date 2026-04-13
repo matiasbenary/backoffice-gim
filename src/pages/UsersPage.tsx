@@ -29,6 +29,7 @@ export function UsersPage() {
   const [users, setUsers] = useState<UserAdminResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('')
   const [activeFilter, setActiveFilter] = useState('')
   const [page, setPage] = useState(1)
@@ -45,7 +46,7 @@ export function UsersPage() {
         page_size: pageSize,
         role: roleFilter || undefined,
         is_active: isActive,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
       })
       .then(({ data, meta }) => {
         setUsers(data ?? [])
@@ -57,14 +58,12 @@ export function UsersPage() {
 
   useEffect(() => {
     fetchUsers()
-  }, [page, roleFilter, activeFilter])
+  }, [page, roleFilter, activeFilter, debouncedSearch])
 
   useEffect(() => {
     const debounce = setTimeout(() => {
-      if (search !== '' || page === 1) {
-        setPage(1)
-      }
-      fetchUsers()
+      setDebouncedSearch(search)
+      setPage(1)
     }, 400)
     return () => clearTimeout(debounce)
   }, [search])
