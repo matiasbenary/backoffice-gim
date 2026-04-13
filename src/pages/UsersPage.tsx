@@ -47,9 +47,8 @@ export function UsersPage() {
         is_active: isActive,
         search: search || undefined,
       })
-      .then((res) => {
-        const { data: users = [], meta } = res as unknown as { data: UserAdminResponse[]; meta: { total_pages: number } }
-        setUsers(users)
+      .then(({ data, meta }) => {
+        setUsers(data ?? [])
         setTotalPages(meta?.total_pages ?? 1)
       })
       .catch(console.error)

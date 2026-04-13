@@ -285,7 +285,7 @@ export const api = {
       if (params?.is_active !== undefined) searchParams.set('is_active', String(params.is_active))
       if (params?.search) searchParams.set('search', params.search)
       const query = searchParams.toString()
-      return request<AdminUsersResponse>(`/api/v1/admin/users${query ? `?${query}` : ''}`)
+      return requestPaginated<UserAdminResponse[]>(`/api/v1/admin/users${query ? `?${query}` : ''}`)
     },
     updateUser: (id: number, data: { is_active?: boolean; role?: string }) =>
       request<UserAdminResponse>(`/api/v1/admin/users/${id}`, {
