@@ -65,25 +65,25 @@ export function DashboardPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Total Usuarios"
-            value={stats.total_users.toLocaleString()}
+            value={stats.total_users?.toLocaleString() ?? '—'}
             icon={Users}
             subtitle="usuarios registrados"
           />
           <StatCard
             title="Gimnasios Activos"
-            value={stats.active_gyms}
+            value={stats.active_gyms ?? '—'}
             icon={Building2}
-            subtitle={`${stats.pending_gyms} pendientes de aprobar`}
+            subtitle={`${stats.pending_gyms ?? '—'} pendientes de aprobar`}
           />
           <StatCard
             title="Membresías Activas"
-            value={stats.active_memberships}
+            value={stats.active_memberships ?? '—'}
             icon={CreditCard}
-            subtitle={`de ${stats.total_memberships} total`}
+            subtitle={`de ${stats.total_memberships ?? '—'} total`}
           />
           <StatCard
             title="Feedback Nuevo"
-            value={stats.new_feedback}
+            value={stats.new_feedback ?? '—'}
             icon={MessageSquare}
             subtitle="requiere atención"
           />
