@@ -48,8 +48,8 @@ export function UsersPage() {
         search: search || undefined,
       })
       .then((res) => {
-        setUsers(res.data)
-        setTotalPages(res.meta.total_pages)
+        setUsers(res.data ?? [])
+        setTotalPages(res.meta?.total_pages ?? 1)
       })
       .catch(console.error)
       .finally(() => setLoading(false))
